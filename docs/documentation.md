@@ -9,18 +9,22 @@ The Smart Email Manager is a modern email client built with React, TypeScript, a
 - OAuth2-based Gmail authentication
 - Secure token management
 - Automatic token refresh
+- Support for multiple email providers (Gmail, IMAP)
 
 ### 2. Email Management
 - List and view emails
 - Compose new emails with rich text editor
 - Label management (create, delete, apply)
 - Priority-based email organization
+- Offline support with IndexedDB storage
+- Multiple email provider support
 
 ### 3. Search Capabilities
 - Fuzzy search for quick lookups
 - Semantic search using vector embeddings
 - Combined search mode for best results
 - Real-time search suggestions
+- Offline search functionality
 
 ### 4. AI-Powered Features
 
@@ -54,6 +58,20 @@ The Smart Email Manager is a modern email client built with React, TypeScript, a
 - Tailwind CSS for styling
 - TipTap for rich text editing
 - Lucide React for icons
+- PWA support for offline access
+
+### Email Providers
+- Base email provider interface
+- Gmail API integration
+- IMAP support
+- Offline storage sync
+
+### Offline Storage
+- IndexedDB for local storage
+- Email caching
+- Contact management
+- Task storage
+- Sync state tracking
 
 ### AI/ML Components
 - @xenova/transformers for ML models
@@ -63,6 +81,7 @@ The Smart Email Manager is a modern email client built with React, TypeScript, a
 
 ### Email Processing
 - Gmail API integration
+- IMAP message handling
 - MIME message parsing
 - Attachment handling
 - Calendar event processing
@@ -97,33 +116,33 @@ interface Contact {
 
 ## Implementation Details
 
-### Email Categorization
-The system uses a fine-tuned BERT model to categorize emails into predefined categories:
-- Primary: Personal and important communications
-- Social: Messages from social networks
-- Promotions: Marketing emails
-- Updates: Notifications and updates
-- Forums: Discussion groups and mailing lists
+### Email Provider System
+The application uses a flexible email provider system that supports multiple email services:
 
-### Smart Reply Generation
-Implements a T5-based model for generating contextually appropriate replies:
-- Analyzes email content and tone
-- Generates multiple response options
-- Ranks responses by relevance
-- Provides confidence scores
+```typescript
+abstract class BaseEmailProvider {
+  abstract connect(): Promise<void>;
+  abstract disconnect(): Promise<void>;
+  abstract listEmails(filter: EmailFilter): Promise<Email[]>;
+  abstract sendEmail(email: EmailData): Promise<void>;
+  abstract createLabel(name: string): Promise<void>;
+  abstract deleteLabel(id: string): Promise<void>;
+  abstract sync(): Promise<void>;
+}
+```
 
-### Calendar Event Detection
-Uses natural language processing to identify and extract event information:
-- Date and time recognition
-- Location extraction
-- Attendee identification
-- Event title generation
+### Offline Storage
+Implements a comprehensive offline storage system using IndexedDB:
 
-### Vector Search Implementation
-- Converts emails into vector embeddings
-- Stores embeddings in an efficient vector database
-- Enables semantic similarity search
-- Combines with traditional search methods
+```typescript
+class OfflineStorage {
+  async initialize(): Promise<void>;
+  async saveEmail(email: Email): Promise<void>;
+  async getEmail(id: string): Promise<Email | undefined>;
+  async getAllEmails(): Promise<Email[]>;
+  async searchEmails(query: string): Promise<Email[]>;
+}
+```
 
 ## Security Considerations
 
@@ -131,11 +150,13 @@ Uses natural language processing to identify and extract event information:
 - OAuth2 flow for secure authentication
 - Secure token storage
 - Regular token rotation
+- Multiple provider authentication support
 
 ### Data Privacy
 - Client-side processing where possible
 - Minimal data storage
 - Secure API communication
+- Encrypted offline storage
 
 ## Performance Optimizations
 
@@ -144,12 +165,14 @@ Uses natural language processing to identify and extract event information:
 - Cached search results
 - Optimized vector operations
 - Parallel search execution
+- Offline search capabilities
 
 ### UI/UX
 - Virtualized lists for email display
 - Lazy loading of email content
 - Progressive loading of attachments
 - Optimistic UI updates
+- PWA for offline access
 
 ## Future Enhancements
 
@@ -167,36 +190,6 @@ Uses natural language processing to identify and extract event information:
 - Offline support
 - Mobile optimization
 - Advanced collaboration features
-
-## API Documentation
-
-### Gmail API Integration
-```typescript
-class GmailAPI {
-  async listEmails(filters: EmailFilter): Promise<Email[]>
-  async sendEmail(email: EmailData): Promise<void>
-  async createLabel(name: string): Promise<void>
-  async deleteLabel(id: string): Promise<void>
-}
-```
-
-### Search API
-```typescript
-class SearchEngine {
-  async fuzzySearch(query: string): Promise<Email[]>
-  async semanticSearch(query: string): Promise<Email[]>
-  async combinedSearch(query: string): Promise<Email[]>
-}
-```
-
-### ML Services
-```typescript
-class EmailAnalyzer {
-  async analyzeEmail(email: Email): Promise<EmailAnalysis>
-  async generateSmartReplies(email: Email): Promise<SmartReply[]>
-  async extractEvents(email: Email): Promise<CalendarEvent[]>
-}
-```
 
 ## Development Guidelines
 
@@ -216,3 +209,4 @@ class EmailAnalyzer {
 - React Query for server state
 - Context for global state
 - Local state for UI
+- Offline state synchronization
