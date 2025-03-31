@@ -8,10 +8,12 @@ export interface Email {
   bcc?: string[];
   subject: string;
   body: string;
+  snippet?: string; // Added snippet
   date: Date;
   labels: string[];
+  isUnread?: boolean; // Added isUnread flag
   priority: 'high' | 'normal' | 'low';
-  hasAttachments: boolean;
+  // hasAttachments: boolean; // Can be derived from attachments array length
   attachments?: EmailAttachment[];
   threadId?: string;
   category?: EmailCategory;
@@ -20,12 +22,13 @@ export interface Email {
   events?: CalendarEvent[];
 }
 
+// Adjusted EmailAttachment structure based on Gmail API data
 export interface EmailAttachment {
-  id: string;
   filename: string;
-  contentType: string;
+  mimeType: string;
   size: number;
-  url: string;
+  attachmentId: string; // ID used to fetch the attachment content
+  partId: string; // Part ID within the message structure
 }
 
 export interface EmailFilter {
