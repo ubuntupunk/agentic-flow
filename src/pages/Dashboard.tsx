@@ -7,9 +7,10 @@ import { EmailList } from '@/components/EmailList';
 import { SearchBar } from '@/components/SearchBar';
 import { LabelManager } from '@/components/LabelManager';
 import { ComposeEmail } from '@/components/ComposeEmail';
-// import { Button } from '@/components/ui/button'; // Comment out for now - requires UI lib setup
+import { Button } from '@/components/ui/button'; // Comment out for now - requires UI lib setup
 import { LayoutDashboard, LogOut, PlusCircle } from 'lucide-react';
 import type { Email } from '@/types/email'; // Import Email type for selection state
+import { EmailDetail } from '@/components/EmailDetail';
 
 const DashboardPage: React.FC = () => {
   const { isAuthenticated, isLoading: isAuthLoading, logout, user } = useAuth();
@@ -17,6 +18,7 @@ const DashboardPage: React.FC = () => {
   const { emails, isLoading: isEmailsLoading, fetchEmails } = useEmails(); // Add fetchEmails if needed for search/filter
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null); // State for selected email
+  const [emailLabels, setEmailLabels] = useState<{ [emailId: string]: string[] }>({});
 
   // Combine loading states
   const isLoading = isAuthLoading || isLabelsLoading || isEmailsLoading;
@@ -37,11 +39,45 @@ const DashboardPage: React.FC = () => {
 
   const handleSendEmail = useCallback(async (emailData: any) => {
     console.log('Sending email:', emailData);
-    // TODO: Implement actual email sending logic using emailService
-    // import { sendEmail } from '@/lib/emailService';
-    // await sendEmail(emailData);
-    setIsComposeOpen(false); // Close compose modal on send
+    try {
+      const { getEmailServiceInstance } = await import('@/lib/emailService');
+      const service = await getEmailServiceInstance();
+      if (service) {
+        await service.sendEmail({
+          to: emailData.to,
+          subject: emailData.subject,
+          body: emailData.body,
+        });
+        setIsComposeOpen(false); // Close compose modal on send
+      } else {
+        console.error('Email service is not initialized.');
+        // TODO: Implement error handling (e.g., display an error message to the user)
+      }
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      // TODO: Implement error handling (e.g., display an error message to the user)
+    }
   }, []);
+
+  const handleAddLabelToEmail = useCallback(
+    (emailId: string, labelName: string) => {
+      console.log(`Adding label "${labelName}" to email ${emailId}`);
+      // TODO: Implement logic to add label to email
+      return new Promise<void>((resolve) => {
+        setEmailLabels((prevEmailLabels) => {
+          const updatedLabels = { ...prevEmailLabels };
+          if (updatedLabels[emailId]) {
+            updatedLabels[emailId] = [...updatedLabels[emailId], labelName];
+          } else {
+            updatedLabels[emailId] = [labelName];
+          }
+          resolve();
+          return updatedLabels;
+        });
+      });
+    },
+    [setEmailLabels]
+  );
 
   const handleCreateLabel = useCallback(async (name: string) => {
       console.log('Creating label:', name);
@@ -73,16 +109,16 @@ const DashboardPage: React.FC = () => {
           {user && <p className="text-sm text-gray-400 truncate">{user.email}</p>}
         </div>
         <nav className="flex-1 space-y-2">
-          {/* Using standard button temporarily */}
-          <button
+          
+          <Button
             className="w-full flex items-center justify-start text-left px-2 py-1.5 text-sm rounded-md text-white hover:bg-gray-700"
             onClick={() => setIsComposeOpen(true)}
           >
             <PlusCircle className="mr-2 h-4 w-4" /> Compose
-          </button>
-          <button className="w-full flex items-center justify-start text-left px-2 py-1.5 text-sm rounded-md text-white hover:bg-gray-700">
+          </Button>
+          <Button className="w-full flex items-center justify-start text-left px-2 py-1.5 text-sm rounded-md text-white hover:bg-gray-700">
             <LayoutDashboard className="mr-2 h-4 w-4" /> Inbox
-          </button>
+          </Button>
           {/* LabelManager with props */}
           <div className="mt-4">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Labels</h3>
@@ -96,13 +132,13 @@ const DashboardPage: React.FC = () => {
           </div>
         </nav>
         <div className="mt-auto">
-           {/* Using standard button temporarily */}
-          <button
+          
+          <Button
             className="w-full flex items-center justify-start text-left px-2 py-1.5 text-sm rounded-md text-white hover:bg-gray-700"
             onClick={logout}
           >
             <LogOut className="mr-2 h-4 w-4" /> Logout
-          </button>
+          </Button>
         </div>
       </aside>
 
@@ -116,6 +152,13 @@ const DashboardPage: React.FC = () => {
           {/* Email List Component with props */}
           <EmailList emails={emails} onEmailSelect={handleEmailSelect} />
           {/* TODO: Add EmailDetail component here, conditionally rendered based on selectedEmail */}
+          {selectedEmail && (
+            <EmailDetail
+              email={selectedEmail}
+              onClose={() => setSelectedEmail(null)}
+              onAddLabel={handleAddLabelToEmail}
+            />
+          )}
         </div>
       </main>
 

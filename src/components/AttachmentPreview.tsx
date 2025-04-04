@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Eye, X } from 'lucide-react';
-import { AttachmentManager } from '../lib/attachmentManager';
+import { AttachmentManager } from '../lib/attachmentManager.tsx'; // Updated import path
 import type { EmailAttachment } from '../types/email';
 
 interface AttachmentPreviewProps {
@@ -33,7 +33,7 @@ export function AttachmentPreview({ attachment, onClose }: AttachmentPreviewProp
         <div className="p-4 border-b flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <span className="text-2xl">
-              {attachmentManager.getFileIcon(attachment.contentType)}
+              {attachmentManager.getFileIcon(attachment.mimeType)}
             </span>
             <div>
               <h3 className="text-lg font-semibold">{attachment.filename}</h3>
@@ -43,10 +43,11 @@ export function AttachmentPreview({ attachment, onClose }: AttachmentPreviewProp
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            {/* Use optional chaining in case url is missing, though AttachmentManager handles preview */}
             <a
-              href={attachment.url}
+              href={attachment.url ?? '#'}
               download={attachment.filename}
-              className="p-2 hover:bg-gray-100 rounded-full"
+              className={`p-2 hover:bg-gray-100 rounded-full ${!attachment.url ? 'opacity-50 cursor-not-allowed' : ''}`}
               title="Download"
             >
               <Download className="w-5 h-5" />

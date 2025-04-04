@@ -1,7 +1,8 @@
 import * as IMAP from 'imap';
 import { simpleParser } from 'mailparser';
-import type { Email, EmailFilter, EmailData } from '../../types/email';
+import type { Email, EmailFilter, EmailData, EmailContact } from '../../types/email';
 import { BaseEmailProvider, type EmailProviderConfig } from './base';
+import { Readable } from 'stream';
 
 export class IMAPEmailProvider extends BaseEmailProvider {
   private client: IMAP;
@@ -23,7 +24,7 @@ export class IMAPEmailProvider extends BaseEmailProvider {
   }
 
   private setupEventListeners(): void {
-    this.client.on('error', (err) => {
+    this.client.on('error', (err: any) => {
       console.error('IMAP Error:', err);
       this.isConnected = false;
     });
@@ -155,19 +156,24 @@ export class IMAPEmailProvider extends BaseEmailProvider {
       });
 
       fetch.on('message', (msg) => {
-        msg.on('body', async (stream) => {
+        msg.on('body', async (readableStream) => {
           try {
+            // Convert ReadableStream to Node.js Stream
+            const stream = new Readable().wrap(readableStream as any);
             const parsed = await simpleParser(stream);
+            const from = Array.isArray(parsed.from) ? parsed.from[0]?.text || '' : parsed.from?.text || '';
+            const to = Array.isArray(parsed.to) ? parsed.to.map(addr => addr?.text || '') : parsed.to?.text.split(',') || [];
             const email: Email = {
               id: parsed.messageId || crypto.randomUUID(),
-              from: parsed.from?.text || '',
-              to: parsed.to?.text.split(',') || [],
+              from: from,
+              to: to,
               subject: parsed.subject || '',
               body: parsed.text || '',
               date: parsed.date || new Date(),
               labels: [],
               priority: 'normal',
-              hasAttachments: parsed.attachments.length > 0,
+              attachments: parsed.attachments,
+              snippet: '',
             };
             emails.push(email);
             this.messageCache.set(email.id, email);

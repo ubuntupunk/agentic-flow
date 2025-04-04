@@ -6,10 +6,11 @@ import type { Email } from '../types/email';
 interface EmailDetailProps {
   email: Email;
   onClose: () => void;
-  onAddLabel: (label: string) => Promise<void>;
+  onAddLabel: (emailId: string, label: string) => Promise<void>;
 }
 
 export function EmailDetail({ email, onClose, onAddLabel }: EmailDetailProps) {
+  const { id: emailId } = email;
   const [newLabel, setNewLabel] = useState('');
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +22,7 @@ export function EmailDetail({ email, onClose, onAddLabel }: EmailDetailProps) {
     setIsAddingLabel(true);
     setError(null);
     try {
-      await onAddLabel(newLabel.trim());
+      await onAddLabel(emailId, newLabel.trim());
       setNewLabel('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add label');
@@ -53,7 +54,7 @@ export function EmailDetail({ email, onClose, onAddLabel }: EmailDetailProps) {
                 {format(email.date, 'PPP p')}
               </p>
             </div>
-            {email.hasAttachments && (
+            {email.attachments && email.attachments.length > 0 && (
               <Paperclip className="w-5 h-5 text-gray-400" />
             )}
           </div>

@@ -4,6 +4,65 @@ export interface Email {
   id: string;
   from: string;
   to: string[];
+  subject: string;
+  body: string;
+  snippet?: string;
+  date: Date;
+  labels: string[];
+  isUnread?: boolean;
+  priority: 'high' | 'normal' | 'low';
+  attachments?: any[]; // Using any[] to accept mailparser's Attachment type
+  threadId?: string;
+  category?: EmailCategory;
+  scheduledDate?: Date;
+  contacts?: Contact[];
+  events?: CalendarEvent[];
+}
+
+export interface EmailFilter {
+  from?: string[];
+}
+
+export interface EmailTemplate {
+  id: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+}
+
+export type EmailCategory =
+  | 'primary'
+  | 'social'
+  | 'promotions'
+  | 'updates'
+  | 'forums';
+
+export interface ThreadAnalysis {
+  participants: string[];
+}
+
+export interface ThreadEvent {
+  date: Date;
+}
+
+export interface SmartReply {
+  text: string;
+}
+
+export interface EmailData {
+  from: string;
+  to: string[];
+  cc?: string[];
+  bcc?: string[];
+  subject: string;
+  body: string;
+  attachments?: EmailAttachment[];
+}
+
+export type EmailContact = {
+  from: string;
+  to: string[];
   cc?: string[];
   bcc?: string[];
   subject: string;
@@ -29,6 +88,9 @@ export interface EmailAttachment {
   size: number;
   attachmentId: string; // ID used to fetch the attachment content
   partId: string; // Part ID within the message structure
+  // TODO: Temporary property to satisfy AttachmentPreview/Manager.
+  // Replace with logic to fetch actual attachment URL/data using attachmentId/partId.
+  url?: string;
 }
 
 export interface EmailFilter {
@@ -58,14 +120,6 @@ export interface CalendarEvent {
   location?: string;
   attendees: string[];
 }
-
-export type EmailCategory =
-  | 'primary'
-  | 'social'
-  | 'promotions'
-  | 'updates'
-  | 'forums';
-
 export interface ThreadAnalysis {
   participants: string[];
   duration: number;
@@ -85,4 +139,27 @@ export interface SmartReply {
   text: string;
   confidence: number;
   type: 'positive' | 'negative' | 'neutral';
+}
+
+/* TODO? 
+export {
+  Email,
+  EmailAttachment,
+  EmailFilter,
+  EmailTemplate,
+  CalendarEvent,
+  ThreadAnalysis,
+  ThreadEvent,
+  SmartReply,
+  EmailData,
+}; */
+
+export interface EmailData {
+  from: string;
+  to: string[];
+  cc?: string[];
+  bcc?: string[];
+  subject: string;
+  body: string;
+  attachments?: EmailAttachment[];
 }

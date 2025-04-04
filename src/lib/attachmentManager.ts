@@ -11,34 +11,10 @@ export class AttachmentManager {
     'text/markdown',
   ];
 
-  async getPreviewComponent(attachment: EmailAttachment): Promise<JSX.Element | null> {
-    if (!this.supportedPreviewTypes.includes(attachment.contentType)) {
-      return null;
-    }
+  // getPreviewComponent removed - exists in attachmentManager.tsx
 
-    switch (attachment.contentType) {
-      case 'application/pdf':
-        return (
-          <Document file={attachment.url}>
-            <Page pageNumber={1} />
-          </Document>
-        );
-      case 'image/jpeg':
-      case 'image/png':
-      case 'image/gif':
-        return <img src={attachment.url} alt={attachment.filename} className="max-w-full h-auto" />;
-      case 'text/plain':
-      case 'text/markdown':
-        const response = await fetch(attachment.url);
-        const text = await response.text();
-        return <pre className="whitespace-pre-wrap">{text}</pre>;
-      default:
-        return null;
-    }
-  }
-
-  getFileIcon(contentType: string): string {
-    switch (contentType) {
+  getFileIcon(mimeType: string): string {
+    switch (mimeType) {
       case 'application/pdf':
         return '📄';
       case 'image/jpeg':
@@ -66,7 +42,7 @@ export class AttachmentManager {
     return `${value.toFixed(1)} ${units[unitIndex]}`;
   }
 
-  isPreviewSupported(contentType: string): boolean {
-    return this.supportedPreviewTypes.includes(contentType);
+  isPreviewSupported(mimeType: string): boolean {
+    return this.supportedPreviewTypes.includes(mimeType);
   }
 }

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Mail, LogIn, Plus, Settings } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Mail, LogIn, Plus, Settings, AlertCircle } from 'lucide-react';
 import { EmailList } from './components/EmailList';
 import { EmailFilters } from './components/EmailFilters';
 import { EmailDetail } from './components/EmailDetail';
@@ -9,6 +9,10 @@ import { GmailOAuth2 } from './lib/oauth2';
 import { GmailAPI } from './lib/gmail';
 import { EmailService } from './lib/emailService';
 import type { Email, EmailFilter } from './types/email';
+
+// In your main application code
+import { Buffer } from 'buffer';
+window.Buffer = Buffer;
 
 const oauth2Config = {
   clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
@@ -29,7 +33,7 @@ function App() {
   const [showLabelManager, setShowLabelManager] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [labelSyncConfig, setLabelSyncConfig] = useState({
+  const [labelSyncConfig] = useState({
     include: [],
     exclude: ['CATEGORY_', 'CHAT', 'SENT', 'INBOX', 'TRASH', 'SPAM']
   });
@@ -43,7 +47,7 @@ function App() {
     if (tokens) {
       setIsAuthenticated(true);
       fetchEmails();
-      syncLabels();
+      syncFilteredLabels();
     }
   }, [filters]);
 
@@ -65,10 +69,15 @@ function App() {
     }
   };
 
-  const syncLabels = async () => {
+  const syncFilteredLabels = async () => {
     try {
-      const labels = await emailService.syncLabels(labelSyncConfig);
-      setAvailableLabels(labels);
+      const labels = await emailService.listLabels();
+      const filteredLabels = labels.filter(label => {
+        const shouldInclude = labelSyncConfig.include.length === 0 || labelSyncConfig.include.some(include => label.name.includes(include));
+        const shouldExclude = labelSyncConfig.exclude.some(exclude => label.name.includes(exclude));
+        return shouldInclude && !shouldExclude;
+      });
+      setAvailableLabels(filteredLabels.map(label => label.name));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sync labels');
     }
@@ -90,26 +99,26 @@ function App() {
 
   const handleAddLabel = async (label: string) => {
     setIsLoading(true);
-    setError(null);
-    try {
-      await gmailAPI.createLabel(label);
-      await syncLabels();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create label');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteLabel = async (label: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const labelId = await gmailAPI.getLabelId(label);
-      if (labelId) {
-        await gmailAPI.deleteLabel(labelId);
-        await syncLabels();
+      setError(null);
+      try {
+        await gmailAPI.createLabel(label);
+        await syncFilteredLabels();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to create label');
+      } finally {
+        setIsLoading(false);
       }
+    };
+  
+    const handleDeleteLabel = async (label: string) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const labelId = await gmailAPI.getLabelId(label);
+        if (labelId) {
+          await gmailAPI.deleteLabel(labelId);
+          await syncFilteredLabels();
+        }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete label');
     } finally {
